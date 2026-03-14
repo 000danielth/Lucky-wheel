@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roata Norocului - Oprire Naturală</title>
+    <title>Roata Norocului</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap');
@@ -14,13 +14,17 @@
             min-height: 100vh;
             color: white;
             overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .wheel-container {
             position: relative;
             width: 380px;
             height: 380px;
-            margin: 2rem auto;
+            margin: 1.5rem auto;
         }
 
         #wheelWrapper {
@@ -61,8 +65,6 @@
             z-index: 100;
             border-radius: 24px 24px 0 0;
             backdrop-filter: blur(15px);
-            max-height: 80vh;
-            overflow-y: auto;
         }
 
         .secret-menu.open { bottom: 0; }
@@ -75,15 +77,13 @@
             transform: translateY(2px);
             box-shadow: 0 2px 0 #7f1d1d;
         }
-        
-        input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
     </style>
 </head>
-<body class="p-4 flex flex-col items-center">
+<body class="p-4">
 
-    <div class="text-center mt-6">
-        <h1 class="text-5xl font-black italic tracking-tighter uppercase">ROATA <span class="text-red-500">DESTINULUI</span></h1>
-        <p class="text-slate-500 font-bold tracking-[0.3em] text-xs mt-2">OPRIRE NATURALĂ - ȘANSE ASCUNSE</p>
+    <div class="text-center mb-2">
+        <h1 id="titleTrigger" class="text-5xl font-black italic tracking-tighter uppercase select-none cursor-default">ROATA <span class="text-red-500">NOROCULUI</span></h1>
+        <!-- Textul de dedesubt a fost șters -->
     </div>
 
     <div class="wheel-container">
@@ -98,7 +98,7 @@
         
         <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
             <div class="flex gap-2 mb-4">
-                <input type="text" id="newItem" placeholder="Opțiune nouă..." class="flex-grow bg-slate-800 p-3 rounded-xl border border-slate-700 outline-none focus:border-blue-500 transition-colors">
+                <input type="text" id="newItem" placeholder="Opțiune nouă..." class="flex-grow bg-slate-800 p-3 rounded-xl border border-slate-700 outline-none focus:border-blue-500 transition-colors text-white">
                 <button id="addBtn" class="bg-blue-600 hover:bg-blue-500 px-6 rounded-xl font-bold transition-colors">+</button>
             </div>
             <div id="itemList" class="flex flex-wrap gap-2"></div>
@@ -108,29 +108,19 @@
     <!-- MENIU SECRET -->
     <div id="secretMenu" class="secret-menu">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="font-black text-red-500 uppercase italic">Control Panel (Secret)</h3>
+            <h3 class="font-black text-red-500 uppercase italic">Control Panel</h3>
             <button id="closeSecret" class="text-slate-500 hover:text-white">✕</button>
         </div>
-
         <div class="space-y-4">
             <div class="bg-slate-800/50 p-4 rounded-xl">
                 <label class="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" id="rigActive" class="w-5 h-5 accent-red-500">
-                    <span class="font-bold text-sm">FORȚEAZĂ CÂȘTIGĂTOR (RIGGED)</span>
+                    <span class="font-bold text-sm text-white uppercase">Forțează câștigător</span>
                 </label>
-                <p class="text-[10px] text-slate-400 mt-1 ml-8">Câștigă instant opțiunea selectată mai jos.</p>
             </div>
-
-            <div class="space-y-2">
-                <p class="text-xs font-bold text-slate-400 uppercase">Setează Probabilitatea (Ascunsă):</p>
-                <div id="chanceControls" class="space-y-2">
-                    <!-- Dinamic -->
-                </div>
-            </div>
+            <div id="chanceControls" class="space-y-2"></div>
         </div>
     </div>
-
-    <div id="secretTrigger" style="position: fixed; bottom: 0; right: 0; width: 30px; height: 30px; cursor: pointer; opacity: 0;"></div>
 
     <script>
         const canvas = document.getElementById('wheelCanvas');
@@ -148,177 +138,112 @@
             { text: "DA", weight: 1 },
             { text: "NU", weight: 1 },
             { text: "POATE", weight: 1 },
-            { text: "REPETĂ", weight: 1 },
+            { text: "MAI STAI", weight: 1 },
             { text: "BĂUTURĂ", weight: 1 }
         ];
 
         let currentRotation = 0;
         let isSpinning = false;
         let riggedTargetIndex = null;
+        let clickCount = 0;
 
-        const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
+        const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
 
         function drawWheel() {
             const size = 800;
             const radius = size / 2;
             const sliceAngle = (2 * Math.PI) / options.length;
-            
             ctx.clearRect(0, 0, size, size);
-            
             options.forEach((opt, i) => {
                 const startAngle = i * sliceAngle;
-                
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.moveTo(radius, radius);
                 ctx.arc(radius, radius, radius, startAngle, startAngle + sliceAngle);
                 ctx.fill();
-                ctx.strokeStyle = "rgba(255,255,255,0.2)";
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
                 ctx.save();
                 ctx.translate(radius, radius);
                 ctx.rotate(startAngle + sliceAngle / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 42px Poppins";
+                ctx.font = "bold 44px Poppins";
                 ctx.shadowColor = "rgba(0,0,0,0.5)";
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 8;
                 ctx.fillText(opt.text, radius - 40, 15);
                 ctx.restore();
             });
-            
             ctx.beginPath();
             ctx.fillStyle = "#334155";
             ctx.arc(radius, radius, 20, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 4;
-            ctx.stroke();
-        }
-
-        function getWeightedRandom() {
-            const totalWeight = options.reduce((sum, opt) => sum + opt.weight, 0);
-            let random = Math.random() * totalWeight;
-            for (let i = 0; i < options.length; i++) {
-                if (random < options[i].weight) return i;
-                random -= options[i].weight;
-            }
-            return 0;
         }
 
         function spin() {
             if (isSpinning || options.length < 2) return;
             isSpinning = true;
-
             let winnerIndex;
-
             if (rigActive.checked && riggedTargetIndex !== null) {
                 winnerIndex = riggedTargetIndex;
-                rigActive.checked = false; 
+                rigActive.checked = false;
             } else {
-                winnerIndex = getWeightedRandom();
+                const totalWeight = options.reduce((s, o) => s + o.weight, 0);
+                let r = Math.random() * totalWeight;
+                for (let i = 0; i < options.length; i++) {
+                    if (r < options[i].weight) { winnerIndex = i; break; }
+                    r -= options[i].weight;
+                }
             }
-
             const sliceDeg = 360 / options.length;
-            
-            // --- LOGICA DE OPRIRE NATURALĂ ---
-            // În loc de centru (sliceDeg / 2), adăugăm un offset aleatoriu.
-            // Păstrăm o zonă tampon de 10% la margini ca să nu se oprească fix pe linie.
-            const padding = sliceDeg * 0.1;
-            const randomOffset = padding + (Math.random() * (sliceDeg - 2 * padding));
-            
-            const targetPosInSlice = randomOffset;
-            const targetRotationForIndex = (winnerIndex * sliceDeg) + targetPosInSlice;
-
-            const extraSpins = 360 * (6 + Math.floor(Math.random() * 4));
-            
-            // Calculăm rotația finală pentru a aduce punctul ales sub marker (la 270 deg)
-            const finalRotation = currentRotation + extraSpins + (270 - (currentRotation + extraSpins + targetRotationForIndex) % 360 + 360) % 360;
-            
-            currentRotation = finalRotation;
+            const offset = (sliceDeg * 0.2) + (Math.random() * (sliceDeg * 0.6));
+            const targetRotation = (winnerIndex * sliceDeg) + offset;
+            const extra = 360 * 8;
+            const final = currentRotation + extra + (270 - (currentRotation + extra + targetRotation) % 360 + 360) % 360;
+            currentRotation = final;
             wheelWrapper.style.transform = `rotate(${currentRotation}deg)`;
-
             setTimeout(() => {
                 isSpinning = false;
-                showWinner(options[winnerIndex].text);
-            }, 5000);
-        }
-
-        function showWinner(name) {
-            const el = document.createElement('div');
-            el.className = "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-slate-900 px-10 py-6 rounded-3xl shadow-[0_0_100px_rgba(255,255,255,0.4)] z-[200] text-center border-4 border-blue-500 scale-0 transition-transform duration-500";
-            el.innerHTML = `<p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Rezultat</p><h2 class="text-5xl font-black italic">${name}</h2>`;
-            document.body.appendChild(el);
-            setTimeout(() => el.classList.add('scale-100'), 50);
-            setTimeout(() => {
-                el.classList.remove('scale-100');
-                setTimeout(() => el.remove(), 500);
-            }, 3000);
+                const winText = options[winnerIndex].text;
+                // Popup simplu
+                const popup = document.createElement('div');
+                popup.className = "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-slate-900 px-12 py-8 rounded-3xl shadow-2xl z-[500] text-center border-4 border-red-500";
+                popup.innerHTML = `<h2 class="text-4xl font-black italic uppercase">${winText}</h2>`;
+                document.body.appendChild(popup);
+                setTimeout(() => popup.remove(), 3000);
+            }, 5200);
         }
 
         function updateUI() {
             itemList.innerHTML = "";
             options.forEach((opt, i) => {
-                const tag = document.createElement('div');
-                tag.className = "bg-slate-800 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-3 border border-slate-700";
-                tag.innerHTML = `<span>${opt.text}</span><button onclick="removeOption(${i})" class="text-slate-500 hover:text-red-500">✕</button>`;
-                itemList.appendChild(tag);
+                const t = document.createElement('div');
+                t.className = "bg-slate-800 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-2 border border-slate-700";
+                t.innerHTML = `${opt.text} <button onclick="removeOption(${i})" class="text-slate-500">✕</button>`;
+                itemList.appendChild(t);
             });
-
             chanceControls.innerHTML = "";
             options.forEach((opt, i) => {
                 const row = document.createElement('div');
-                row.className = `flex items-center gap-3 p-3 rounded-xl transition-all ${riggedTargetIndex === i ? 'bg-red-500/20 border-red-500/50' : 'bg-slate-800 border-transparent'} border`;
-                
-                row.innerHTML = `
-                    <button class="flex-grow text-left text-sm font-bold" onclick="selectRigged(${i})">${opt.text}</button>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] text-slate-500 uppercase font-black">Șansă (Weight):</span>
-                        <input type="number" value="${opt.weight}" min="1" max="1000" 
-                            class="w-16 bg-slate-900 border border-slate-600 rounded p-1 text-center text-xs text-white"
-                            onchange="updateWeight(${i}, this.value)">
-                    </div>
-                `;
+                row.className = `flex items-center justify-between p-2 rounded-xl ${riggedTargetIndex === i ? 'bg-red-500/20' : 'bg-slate-800'}`;
+                row.innerHTML = `<button class="text-xs font-bold text-white uppercase" onclick="selectRigged(${i})">${opt.text}</button>
+                <input type="number" value="${opt.weight}" class="w-12 bg-black text-white text-[10px] p-1 rounded" onchange="updateWeight(${i}, this.value)">`;
                 chanceControls.appendChild(row);
             });
-
             drawWheel();
         }
 
-        window.updateWeight = (i, val) => {
-            options[i].weight = parseInt(val) || 1;
-        };
-
-        window.removeOption = (i) => {
-            options.splice(i, 1);
-            if (riggedTargetIndex === i) riggedTargetIndex = null;
-            updateUI();
-        };
-
-        window.selectRigged = (i) => {
-            riggedTargetIndex = i;
-            updateUI();
-        };
-
-        addBtn.onclick = () => {
-            const val = newItemInput.value.trim();
-            if (val) {
-                options.push({ text: val, weight: 1 });
-                newItemInput.value = "";
-                updateUI();
-            }
-        };
-
+        window.removeOption = i => { options.splice(i, 1); updateUI(); };
+        window.updateWeight = (i, v) => { options[i].weight = parseInt(v) || 1; };
+        window.selectRigged = i => { riggedTargetIndex = i; updateUI(); };
+        addBtn.onclick = () => { if(newItemInput.value) { options.push({text: newItemInput.value, weight: 1}); newItemInput.value=""; updateUI(); } };
         spinBtn.onclick = spin;
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 's') secretMenu.classList.toggle('open');
-        });
-        document.getElementById('secretTrigger').onclick = () => secretMenu.classList.toggle('open');
+        window.addEventListener('keydown', e => { if(e.key.toLowerCase() === 's') secretMenu.classList.toggle('open'); });
+        document.getElementById('titleTrigger').onclick = () => {
+            clickCount++;
+            if(clickCount >= 5) { secretMenu.classList.add('open'); clickCount = 0; }
+            setTimeout(() => clickCount = 0, 1500);
+        };
         document.getElementById('closeSecret').onclick = () => secretMenu.classList.remove('open');
-
         updateUI();
     </script>
 </body>
